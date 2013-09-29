@@ -3,6 +3,14 @@
  *
  * $Id: HttpRequest.java,v 1.2 2003/11/26 18:11:53 kangasha Exp $
  *
+ * HttpRequest was modified for completion with enhancements as
+ * an assignment for the course Computer Networks and Security
+ *
+ * Modifier's details:
+ *      Benjamin Martin
+ *      s2846492
+ *      benjamin.martin2@griffithuni.edu.au
+ *
  */
 
 import java.io.*;
@@ -15,6 +23,7 @@ public class HttpRequest {
      */
     final static String CRLF = "\r\n";
     final static int HTTP_PORT = 80;
+
     /**
      * Store the request parameters
      */
@@ -22,6 +31,7 @@ public class HttpRequest {
     String URL;
     String version;
     String headers = "";
+
     /**
      * Server and port
      */
@@ -40,21 +50,22 @@ public class HttpRequest {
         }
 
         String[] tmp = firstLine.split(" ");
-        method = /* Fill in */;
-        URL = /* Fill in */;
-        version = /* Fill in */;
+        method = tmp[0]; /* Fill in */
+        URL = tmp[1];/* Fill in */
+        version = tmp[2]; /* Fill in */
 
         System.out.println("URL is: " + URL);
 
         if (!method.equals("GET")) {
             System.out.println("Error: Method not GET");
         }
+
         try {
             String line = from.readLine();
             while (line.length() != 0) {
                 headers += line + CRLF;
-        /* We need to find host header to know which server to
-		 * contact in case the request URL is not complete. */
+                /* We need to find host header to know which server to
+		         * contact in case the request URL is not complete. */
                 if (line.startsWith("Host:")) {
                     tmp = line.split(" ");
                     if (tmp[1].indexOf(':') > 0) {
@@ -72,6 +83,7 @@ public class HttpRequest {
             System.out.println("Error reading from socket: " + e);
             return;
         }
+
         System.out.println("Host to contact is: " + host + " at port " + port);
     }
 
@@ -104,7 +116,7 @@ public class HttpRequest {
 
         req = method + " " + URL + " " + version + CRLF;
         req += headers;
-	/* This proxy does not support persistent connections */
+	    /* This proxy does not support persistent connections */
         req += "Connection: close" + CRLF;
         req += CRLF;
 

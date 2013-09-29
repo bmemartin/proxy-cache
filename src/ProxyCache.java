@@ -3,6 +3,14 @@
  *
  * $Id: ProxyCache.java,v 1.3 2004/02/16 15:22:00 kangasha Exp $
  *
+ * ProxyCache was modified for completion with enhancements as
+ * an assignment for the course Computer Networks and Security
+ *
+ * Modifier's details:
+ *      Benjamin Martin
+ *      s2846492
+ *      benjamin.martin2@griffithuni.edu.au
+ *
  */
 
 import java.net.*;
@@ -14,6 +22,7 @@ public class ProxyCache {
      * Port for the proxy
      */
     private static int port;
+
     /**
      * Socket for client connections
      */
@@ -25,7 +34,7 @@ public class ProxyCache {
     public static void init(int p) {
         port = p;
         try {
-            socket = /* Fill in */;
+            socket = new ServerSocket(port); /* Fill in */
         } catch (IOException e) {
             System.out.println("Error creating socket: " + e);
             System.exit(-1);
@@ -37,25 +46,25 @@ public class ProxyCache {
         HttpRequest request = null;
         HttpResponse response = null;
 
-	/* Process request. If there are any exceptions, then simply
-     * return and end this request. This unfortunately means the
-	 * client will hang for a while, until it timeouts. */
+        /* Process request. If there are any exceptions, then simply
+         * return and end this request. This unfortunately means the
+         * client will hang for a while, until it timeouts. */
 
-	/* Read request */
+	    /* Read request */
         try {
-            BufferedReader fromClient = /* Fill in */;
-            request = /* Fill in */;
+            BufferedReader fromClient = new BufferedReader(new InputStreamReader(client.getInputStream())); /* Fill in */
+            request = new HttpRequest(fromClient); /* Fill in */
         } catch (IOException e) {
             System.out.println("Error reading request from client: " + e);
             return;
 
         }
-	/* Send request to server */
+	    /* Send request to server */
         try {
-	    /* Open socket and write request to socket */
-            server = /* Fill in */;
-            DataOutputStream toServer = /* Fill in */;
-	    /* Fill in */
+	        /* Open socket and write request to socket */
+            server = new Socket(request.getHost(), request.getPort()); /* Fill in */
+            DataOutputStream toServer = new DataOutputStream(server.getOutputStream()); /* Fill in */
+	        toServer.writeBytes(request.toString()); /* Fill in */
         } catch (UnknownHostException e) {
             System.out.println("Unknown host: " + request.getHost());
             System.out.println(e);
@@ -64,13 +73,16 @@ public class ProxyCache {
             System.out.println("Error writing request to server: " + e);
             return;
         }
-	/* Read response and forward it to client */
+	    /* Read response and forward it to client */
         try {
-            DataInputStream fromServer = /* Fill in */;
-            response = /* Fill in */;
-            DataOutputStream toClient = /* Fill in */;
-	    /* Fill in */
-	    /* Write response to client. First headers, then body */
+            DataInputStream fromServer = new DataInputStream(server.getInputStream()); /* Fill in */
+            response = new HttpResponse(fromServer);/* Fill in */
+            DataOutputStream toClient = new DataOutputStream(client.getOutputStream()); /* Fill in */
+
+	        /* Write response to client. First headers, then body */
+            toClient.writeBytes(response.toString()); /* Fill in */
+            toClient.write(response.body); /* Fill in */
+
             client.close();
             server.close();
         } catch (IOException e) {
@@ -105,12 +117,12 @@ public class ProxyCache {
 
         while (true) {
             try {
-                client = /* Fill in */;
+                client = socket.accept(); /* Fill in */
                 handle(client);
             } catch (IOException e) {
                 System.out.println("Error reading request from client: " + e);
-		/* Definitely cannot continue processing this request,
-		 * so skip to next iteration of while loop. */
+		        /* Definitely cannot continue processing this request,
+		         * so skip to next iteration of while loop. */
                 continue;
             }
         }
