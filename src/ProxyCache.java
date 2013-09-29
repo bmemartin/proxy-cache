@@ -29,12 +29,18 @@ public class ProxyCache {
     private static ServerSocket socket;
 
     /**
-     * Create the ProxyCache object and the socket
+     * Cache for the proxy
+     */
+    private static HashMap cache;
+
+    /**
+     * Create the ProxyCache object, socket, and the cache
      */
     public static void init(int p) {
         port = p;
         try {
             socket = new ServerSocket(port); /* Fill in */
+            cache = new HashMap();
         } catch (IOException e) {
             System.out.println("Error creating socket: " + e);
             System.exit(-1);
@@ -51,40 +57,76 @@ public class ProxyCache {
          * client will hang for a while, until it timeouts. */
 
 	    /* Read request */
+        request = readRequest(client);
+        if (request == null)
+            return;
+
+	    /* Send request to server */
+        server = sendRequest(request);
+        if (request == null)
+            return;
+
+	    /* Read response from server */
+        response = readResponse(server);
+
+        /* Forward servers response to client */
+        sendResponse(response, client);
+    }
+
+    private static HttpRequest readRequest(Socket client) {
+        HttpRequest request = null;
+
         try {
             BufferedReader fromClient = new BufferedReader(new InputStreamReader(client.getInputStream())); /* Fill in */
             request = new HttpRequest(fromClient); /* Fill in */
         } catch (IOException e) {
             System.out.println("Error reading request from client: " + e);
-            return;
-
         }
-	    /* Send request to server */
+
+        return request;
+    }
+
+    private static Socket sendRequest(HttpRequest request) {
+        Socket server = null;
+
         try {
 	        /* Open socket and write request to socket */
             server = new Socket(request.getHost(), request.getPort()); /* Fill in */
             DataOutputStream toServer = new DataOutputStream(server.getOutputStream()); /* Fill in */
-	        toServer.writeBytes(request.toString()); /* Fill in */
+            toServer.writeBytes(request.toString()); /* Fill in */
         } catch (UnknownHostException e) {
             System.out.println("Unknown host: " + request.getHost());
             System.out.println(e);
-            return;
         } catch (IOException e) {
             System.out.println("Error writing request to server: " + e);
-            return;
         }
-	    /* Read response and forward it to client */
+
+        return server;
+    }
+
+    private static HttpResponse readResponse(Socket server) {
+        HttpResponse response = null;
+
         try {
             DataInputStream fromServer = new DataInputStream(server.getInputStream()); /* Fill in */
             response = new HttpResponse(fromServer);/* Fill in */
+            server.close();
+        } catch (IOException e) {
+            System.out.println("Error writing response to client: " + e);
+        }
+
+        return response;
+    }
+
+    private static void sendResponse(HttpResponse response, Socket client) {
+        try {
             DataOutputStream toClient = new DataOutputStream(client.getOutputStream()); /* Fill in */
 
-	        /* Write response to client. First headers, then body */
+            /* Write response to client. First headers, then body */
             toClient.writeBytes(response.toString()); /* Fill in */
             toClient.write(response.body); /* Fill in */
 
             client.close();
-            server.close();
         } catch (IOException e) {
             System.out.println("Error writing response to client: " + e);
         }
