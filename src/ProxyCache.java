@@ -31,7 +31,7 @@ public class ProxyCache {
     /**
      * Cache for the proxy
      */
-    private static HashMap cache;
+    private static HashMap<HttpRequest, HttpResponse> cache;
 
     /**
      * Create the ProxyCache object, socket, and the cache
@@ -40,13 +40,16 @@ public class ProxyCache {
         port = p;
         try {
             socket = new ServerSocket(port); /* Fill in */
-            cache = new HashMap();
+            cache = new HashMap<HttpRequest, HttpResponse>();
         } catch (IOException e) {
             System.out.println("Error creating socket: " + e);
             System.exit(-1);
         }
     }
 
+    /**
+     * Processes accepted client socket connection
+     */
     public static void handle(Socket client) {
         Socket server = null;
         HttpRequest request = null;
@@ -58,34 +61,69 @@ public class ProxyCache {
 
 	    /* Read request */
         request = readRequest(client);
-        if (request == null)
+        if (request == null) {
             return;
+        }
 
-	    /* Send request to server */
-        server = sendRequest(request);
-        if (request == null)
-            return;
+        /* Check proxy cache for a valid response to request */
+        response = getCacheResponse(request);
+        /* If a valid response is not found within the proxy cache
+         * send the request to the specific server. */
+        if (response == null) {
+            /* Send request to server */
+            server = sendRequest(request);
+            if (server == null) {
+                return;
+            }
 
-	    /* Read response from server */
-        response = readResponse(server);
+            /* Read response from server */
+            response = readResponse(server);
+
+            /* Cache new request and response */
+            addCacheResponse(request, response);
+        }
 
         /* Forward servers response to client */
         sendResponse(response, client);
     }
 
+    /**
+     * Reads a HTTP request from the clients socket
+     */
     private static HttpRequest readRequest(Socket client) {
         HttpRequest request = null;
 
         try {
             BufferedReader fromClient = new BufferedReader(new InputStreamReader(client.getInputStream())); /* Fill in */
             request = new HttpRequest(fromClient); /* Fill in */
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.out.println("Error reading request from client: " + e);
         }
 
         return request;
     }
 
+    /**
+     * Searches through the stored cache for valid response to given request
+     */
+    private static HttpResponse getCacheResponse(HttpRequest request) {
+        HttpResponse response = null;
+
+        Iterator iter = cache.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry cacheEntry = (Map.Entry)iter.next();
+            HttpRequest cacheRequest = (HttpRequest) cacheEntry.getKey();
+            if (request.getURL().equals(cacheRequest.getURL())) {
+                response = (HttpResponse) cacheEntry.getValue();
+            }
+        }
+
+        return response;
+    }
+
+    /**
+     * Opens a socket to a requested server and sends the request through
+     */
     private static Socket sendRequest(HttpRequest request) {
         Socket server = null;
 
@@ -104,6 +142,9 @@ public class ProxyCache {
         return server;
     }
 
+    /**
+     * Attempts to read a response from the given server socket
+     */
     private static HttpResponse readResponse(Socket server) {
         HttpResponse response = null;
 
@@ -118,6 +159,16 @@ public class ProxyCache {
         return response;
     }
 
+    /**
+     * Adds an entry to the cache using the request as a key to the response
+     */
+    private static void addCacheResponse(HttpRequest request, HttpResponse response) {
+        cache.put(request, response);
+    }
+
+    /**
+     * Forwards a passed response to the given client socket
+     */
     private static void sendResponse(HttpResponse response, Socket client) {
         try {
             DataOutputStream toClient = new DataOutputStream(client.getOutputStream()); /* Fill in */
