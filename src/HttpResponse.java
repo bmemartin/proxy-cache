@@ -14,8 +14,6 @@
  */
 
 import java.io.*;
-import java.net.*;
-import java.util.*;
 
 public class HttpResponse {
     final static String CRLF = "\r\n";
@@ -34,9 +32,11 @@ public class HttpResponse {
     /**
      * Reply status and headers
      */
-    String version;
     int status;
+    String version;
     String statusLine = "";
+    String eTag = "";
+    String modified = "";
     String headers = "";
     /* Body of reply */
     byte[] body = new byte[MAX_OBJECT_SIZE];
@@ -51,11 +51,15 @@ public class HttpResponse {
 
 	    /* First read status line and response headers */
         try {
-            String line = fromServer.readLine(); /* Fill in */
+            String line = fromServer.readLine();
             while (line.length() != 0) {
                 if (!gotStatusLine) {
                     statusLine = line;
                     gotStatusLine = true;
+
+                    String[] tmp = line.split(" ");
+                    version = tmp[0];
+                    status = Integer.parseInt(tmp[1]);
                 } else {
                     headers += line + CRLF;
                 }
@@ -66,10 +70,20 @@ public class HttpResponse {
 		         * header "Content-Length", others return
 		         * "Content-length". You need to check for both
 		         * here. */
-                if (line.startsWith("Content-Length:") || line.startsWith("Content-length:")) { /* Fill in */
+                if (line.startsWith("Content-Length:") || line.startsWith("Content-length:")) {
                     String[] tmp = line.split(" ");
                     length = Integer.parseInt(tmp[1]);
                 }
+
+                if (line.startsWith("ETag:")) {
+                    String[] tmp = line.split(" ");
+                    eTag = tmp[1];
+                }
+
+                if (line.startsWith("Last-Modified:") && line.length() > 15) {
+                    modified = line.substring(15);
+                }
+
                 line = fromServer.readLine();
             }
         } catch (IOException e) {
@@ -96,14 +110,14 @@ public class HttpResponse {
 	         * response. */
             while (bytesRead < length || loop) {
 		        /* Read it in as binary data */
-                int res = fromServer.read(buf, 0, BUF_SIZE); /* Fill in */
+                int res = fromServer.read(buf, 0, BUF_SIZE);
                 if (res == -1) {
                     break;
                 }
 		        /* Copy the bytes into body. Make sure we don't exceed
 		         * the maximum object size. */
                 for (int i = 0; i < res && (i + bytesRead) < MAX_OBJECT_SIZE; i++) {
-		            body[bytesRead + i] = buf[i]; /* Fill in */
+		            body[bytesRead + i] = buf[i];
                 }
                 bytesRead += res;
             }
@@ -112,6 +126,20 @@ public class HttpResponse {
             return;
         }
 
+    }
+
+    /**
+     * Return ETag from response
+     */
+    public String getETag() {
+        return eTag;
+    }
+
+    /**
+     * Return Last-Modified from response
+     */
+    public String getModified() {
+        return modified;
     }
 
     /**

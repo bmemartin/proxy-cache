@@ -14,8 +14,6 @@
  */
 
 import java.io.*;
-import java.net.*;
-import java.util.*;
 
 public class HttpRequest {
     /**
@@ -41,23 +39,21 @@ public class HttpRequest {
     /**
      * Create HttpRequest by reading it from the client socket
      */
-    public HttpRequest(BufferedReader from) {
+    public HttpRequest(BufferedReader from) throws Exception {
         String firstLine = "";
         try {
             firstLine = from.readLine();
         } catch (IOException e) {
-            System.out.println("Error reading request line: " + e);
+            System.out.println("Error reading first request line: " + e);
         }
 
         String[] tmp = firstLine.split(" ");
-        method = tmp[0]; /* Fill in */
-        URL = tmp[1];/* Fill in */
-        version = tmp[2]; /* Fill in */
-
-        System.out.println("URL is: " + URL);
+        method = tmp[0];
+        URL = tmp[1];
+        version = tmp[2];
 
         if (!method.equals("GET")) {
-            System.out.println("Error: Method not GET");
+            throw new Exception("!GET");
         }
 
         try {
@@ -83,8 +79,6 @@ public class HttpRequest {
             System.out.println("Error reading from socket: " + e);
             return;
         }
-
-        System.out.println("Host to contact is: " + host + " at port " + port);
     }
 
     /**
