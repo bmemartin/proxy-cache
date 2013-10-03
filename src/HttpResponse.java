@@ -42,17 +42,23 @@ public class HttpResponse {
     byte[] body = new byte[MAX_OBJECT_SIZE];
 
     /**
-     * Read response from server.
+     * Creates a HttpResponse object by reading all information contained
+     * within the passed DataInputStream
+     *
+     * It returns nothing.
+     * It takes DataInputStream.
      */
     public HttpResponse(DataInputStream fromServer) {
         /* Length of the object */
         int length = -1;
         boolean gotStatusLine = false;
 
-	    /* First read status line and response headers */
+	    /* Response headers must be read in and stored */
         try {
             String line = fromServer.readLine();
             while (line.length() != 0) {
+                /* Store the first read line as the status line of the response
+                 * and split the line into its protocol version and status code */
                 if (!gotStatusLine) {
                     statusLine = line;
                     gotStatusLine = true;
@@ -64,22 +70,22 @@ public class HttpResponse {
                     headers += line + CRLF;
                 }
 
-		        /* Get length of content as indicated by
-		         * Content-Length header. Unfortunately this is not
-		         * present in every response. Some servers return the
-		         * header "Content-Length", others return
-		         * "Content-length". You need to check for both
-		         * here. */
+                /* If the current line being read contains the content length
+                 * save the value as a response data member */
                 if (line.startsWith("Content-Length:") || line.startsWith("Content-length:")) {
                     String[] tmp = line.split(" ");
                     length = Integer.parseInt(tmp[1]);
                 }
 
+                /* If the current line being read contains an ETag
+                 * save the value as a response data member */
                 if (line.startsWith("ETag:")) {
                     String[] tmp = line.split(" ");
                     eTag = tmp[1];
                 }
 
+                /* If the current line being read contains the last time it was modified
+                 * save the value as a response data member */
                 if (line.startsWith("Last-Modified:") && line.length() > 15) {
                     modified = line.substring(15);
                 }
@@ -91,6 +97,7 @@ public class HttpResponse {
             return;
         }
 
+        /* All data stored within the body of the response is read and stored */
         try {
             int bytesRead = 0;
             byte buf[] = new byte[BUF_SIZE];
@@ -129,14 +136,21 @@ public class HttpResponse {
     }
 
     /**
-     * Return ETag from response
+     * Allows external sources read the responses ETag
+     *
+     * It returns a String.
+     * It takes nothing.
      */
     public String getETag() {
         return eTag;
     }
 
     /**
-     * Return Last-Modified from response
+     * Allows external sources read the last time the file, that the response
+     * represents, was modified
+     *
+     * It returns a String.
+     * It takes nothing.
      */
     public String getModified() {
         return modified;
@@ -146,6 +160,9 @@ public class HttpResponse {
      * Convert response into a string for easy re-sending. Only
      * converts the response headers, body is not converted to a
      * string.
+     *
+     * It returns a String.
+     * It takes nothing.
      */
     public String toString() {
         String res = "";

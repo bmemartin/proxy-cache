@@ -18,10 +18,6 @@ import java.io.*;
 import java.util.*;
 
 public class ProxyCache {
-    /**
-     * Port for the proxy
-     */
-    private static int port;
 
     /**
      * Socket for client connections
@@ -34,10 +30,12 @@ public class ProxyCache {
     private static HashMap<HttpRequest, HttpResponse> cache;
 
     /**
-     * Create the ProxyCache object, socket, and the cache
+     * Initialises the proxy server's listening socket and cache storage
+     *
+     * It returns nothing.
+     * It takes an int for the port to use.
      */
-    public static void init(int p) {
-        port = p;
+    public static void init(int port) {
         try {
             socket = new ServerSocket(port);
             cache = new HashMap<HttpRequest, HttpResponse>();
@@ -48,7 +46,11 @@ public class ProxyCache {
     }
 
     /**
-     * Searches through the stored cache for valid response to given request
+     * Searches through the stored cache for a response to related to
+     * the passed in request.
+     *
+     * It returns HttpResponse.
+     * It takes a HttpRequest.
      */
     public static HttpResponse getCacheResponse(HttpRequest request) {
         HttpResponse response = null;
@@ -67,6 +69,9 @@ public class ProxyCache {
 
     /**
      * Adds an entry to the cache using the request as a key to the response
+     *
+     * It returns nothing.
+     * It takes a HttpRequest and HttpResponse
      */
     public static void addCacheResponse(HttpRequest request, HttpResponse response) {
         cache.put(request, response);
@@ -77,7 +82,13 @@ public class ProxyCache {
 
 
     /**
-     * Read command line arguments and start proxy
+     * The main execution of the ProxyCache. The proxy is initialised and
+     * then waits for clients to connect. Once a client connects a new
+     * thread is spawned to handle that client so the proxy can continue
+     * listening for other clients.
+     *
+     * It returns nothing.
+     * It takes an int specifying the port to use
      */
     public static void main(String args[]) {
         int myPort = 0;
@@ -94,7 +105,7 @@ public class ProxyCache {
 
         init(myPort);
 
-        /** Main loop. Listen for incoming connections and spawn a new
+        /* Main loop. Listen for incoming connections and spawn a new
          * thread for handling them */
         Socket client = null;
 

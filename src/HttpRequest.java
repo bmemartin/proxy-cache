@@ -17,7 +17,7 @@ import java.io.*;
 
 public class HttpRequest {
     /**
-     * Help variables
+     * Helper variables
      */
     final static String CRLF = "\r\n";
     final static int HTTP_PORT = 80;
@@ -37,14 +37,21 @@ public class HttpRequest {
     private int port;
 
     /**
-     * Create HttpRequest by reading it from the client socket
+     * Creates a HttpRequest object by reading the required information
+     * from a BufferedReader object.
+     *
+     * It returns nothing.
+     * It takes a BufferedReader.
      */
     public HttpRequest(BufferedReader from) throws Exception {
+        /* First line of the passed BufferedReader is read to
+         * obtain the requests method, URL, and version. */
         String firstLine = "";
         try {
             firstLine = from.readLine();
         } catch (IOException e) {
-            System.out.println("Error reading first request line: " + e);
+            System.out.println("400 Bad Request: " + e);
+            return;
         }
 
         String[] tmp = firstLine.split(" ");
@@ -52,10 +59,13 @@ public class HttpRequest {
         URL = tmp[1];
         version = tmp[2];
 
+        /* Only GET request methods have been implemented */
         if (!method.equals("GET")) {
-            throw new Exception("!GET");
+            throw new NotGETException(firstLine);
         }
 
+        /* The remaining lines of the request header must be read
+         * from the passed BufferedReader object */
         try {
             String line = from.readLine();
             while (line.length() != 0) {
@@ -76,27 +86,36 @@ public class HttpRequest {
                 line = from.readLine();
             }
         } catch (IOException e) {
-            System.out.println("Error reading from socket: " + e);
+            System.out.println("400 Bad Request: " + e);
             return;
         }
     }
 
     /**
-     * Return host for which this request is intended
+     * Allows external sources read the requests intended host
+     *
+     * It returns a String.
+     * It takes nothing.
      */
     public String getHost() {
         return host;
     }
 
     /**
-     * Return port for server
+     * Allows external sources read the requests servers port
+     *
+     * It returns a int.
+     * It takes nothing.
      */
     public int getPort() {
         return port;
     }
 
     /**
-     * Return URL to connect to
+     * Allows external sources read the specified URL
+     *
+     * It returns a String.
+     * It takes nothing.
      */
     public String getURL() {
         return URL;
@@ -104,6 +123,9 @@ public class HttpRequest {
 
     /**
      * Convert request into a string for easy re-sending.
+     *
+     * It returns a String.
+     * It takes nothing.
      */
     public String toString() {
         String req = "";
@@ -112,6 +134,25 @@ public class HttpRequest {
         req += headers;
 	    /* This proxy does not support persistent connections */
         req += "Connection: close" + CRLF;
+        req += CRLF;
+
+        return req;
+    }
+
+    /**
+     * Convert request into a string for easy re-sending along with
+     * the addition of extra header lines.
+     *
+     * It returns a String.
+     * It takes a String containing an eTag.
+     */
+    public String toConditionalRequest(String eTag) {
+        String req = "";
+
+        req = method + " " + URL + " " + version + CRLF;
+        req += headers;
+        req += "If-None-Match: " + eTag + CRLF;
+        //req += "If-Modified-Since: " + modified + CRLF;
         req += CRLF;
 
         return req;
