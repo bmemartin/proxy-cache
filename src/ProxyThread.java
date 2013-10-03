@@ -50,7 +50,7 @@ public class ProxyThread implements Runnable {
             /* Create a condition request for validation that the cached
              * response is still valid (up to date). */
             try {
-                String reqStr = request.toConditionalRequest(response.getETag());
+                String reqStr = request.toConditionalRequest(response.getETag(), response.getModified());
                 conditionRequest = new HttpRequest(new BufferedReader(new StringReader(reqStr)));
             } catch (Exception e) {
                 System.out.println(e);

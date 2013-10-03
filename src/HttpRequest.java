@@ -146,13 +146,24 @@ public class HttpRequest {
      * It returns a String.
      * It takes a String containing an eTag.
      */
-    public String toConditionalRequest(String eTag) {
+    public String toConditionalRequest(String eTag, String lastMod) {
         String req = "";
 
         req = method + " " + URL + " " + version + CRLF;
         req += headers;
-        req += "If-None-Match: " + eTag + CRLF;
-        //req += "If-Modified-Since: " + modified + CRLF;
+
+        /* The cached response shows how the conditional request should
+         * validate the represented file. If an ETag is supplied it is to
+         * be validated using an ETag. If a Last-Modified value is
+         * supplied validated using that. If both values exist then
+         * both values should be used for validating. */
+        if (eTag != "") {
+            req += "If-None-Match: " + eTag + CRLF;
+        }
+        if (lastMod != "") {
+            req += "If-Modified-Since: " + lastMod + CRLF;
+        }
+
         req += CRLF;
 
         return req;
