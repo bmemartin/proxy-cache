@@ -53,7 +53,7 @@ public class ProxyThread implements Runnable {
                 String reqStr = request.toConditionalRequest(response.getETag(), response.getModified());
                 conditionRequest = new HttpRequest(new BufferedReader(new StringReader(reqStr)));
             } catch (Exception e) {
-                System.out.println(e);
+                System.out.println("400 Bad Request: " + e);
             }
 
             /* Send the condition request to the server.
@@ -139,7 +139,7 @@ public class ProxyThread implements Runnable {
             System.out.println("Unknown host: " + request.getHost());
             System.out.println(e);
         } catch (IOException e) {
-            System.out.println("Error writing request to server: " + e);
+            System.out.println("500 Internal Server Error: " + e);
         }
 
         return server;
@@ -159,7 +159,7 @@ public class ProxyThread implements Runnable {
             response = new HttpResponse(fromServer);
             server.close();
         } catch (IOException e) {
-            System.out.println("Error reading server response: " + e);
+            System.out.println("500 Internal Server Error: " + e);
         }
 
         return response;
@@ -181,7 +181,7 @@ public class ProxyThread implements Runnable {
 
             mClient.close();
         } catch (IOException e) {
-            System.out.println("Error writing response to client: " + e);
+            System.out.println("500 Internal Server Error: " + e);
         }
     }
 }

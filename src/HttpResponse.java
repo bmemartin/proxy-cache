@@ -93,7 +93,7 @@ public class HttpResponse {
                 line = fromServer.readLine();
             }
         } catch (IOException e) {
-            System.out.println("Error reading headers from server: " + e);
+            System.out.println("502 Bad Gateway: " + e);
             return;
         }
 
@@ -129,7 +129,7 @@ public class HttpResponse {
                 bytesRead += res;
             }
         } catch (IOException e) {
-            System.out.println("Error reading response body: " + e);
+            System.out.println("502 Bad Gateway: " + e);
             return;
         }
 
