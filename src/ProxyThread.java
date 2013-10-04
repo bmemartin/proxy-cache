@@ -53,7 +53,8 @@ public class ProxyThread implements Runnable {
                 String reqStr = request.toConditionalRequest(response.getETag(), response.getModified());
                 conditionRequest = new HttpRequest(new BufferedReader(new StringReader(reqStr)));
             } catch (Exception e) {
-                System.out.println("400 Bad Request: " + e);
+                System.out.println("Error occurred creating conditional request: " + e + "\nFalling back to cached response.");
+                sendResponse(response);
             }
 
             /* Send the condition request to the server.
@@ -66,19 +67,15 @@ public class ProxyThread implements Runnable {
             conditionResponse = readResponse(server);
 
             /* If the condition response shows that the file has not been
-             * modified then use the response from cache. If the file has
-             * been modified use the condition response and update the
-             * cache. For all other statuses exit the current request. */
+             * modified then use the response from cache. For all other
+             * statuses use the condition response and update the cache. */
             if (conditionResponse.status == 304) {
                 cacheStatus = "Up-to-date entry found.";
                 sendResponse(response);
-            } else if (conditionResponse.status == 200) {
+            } else {
                 cacheStatus = "Outdated entry found, updating...";
                 ProxyCache.addCacheResponse(request, conditionResponse);
                 sendResponse(conditionResponse);
-            } else {
-                System.out.println(conditionResponse.statusLine);
-                return;
             }
         } else {
             /* Send the condition request to the server.
@@ -114,8 +111,10 @@ public class ProxyThread implements Runnable {
         } catch (NotGETException notGET) {
             System.out.println("501 Not Implemented: Method not GET");
             System.out.println(notGET.getMessage() + "\n");
+            sendResponse(new HttpResponse("501 Not Implemented"));
         } catch (Exception e) {
             System.out.println("400 Bad Request: " + e);
+            sendResponse(new HttpResponse("400 Bad Request"));
         }
 
         return request;
@@ -138,8 +137,10 @@ public class ProxyThread implements Runnable {
         } catch (UnknownHostException e) {
             System.out.println("Unknown host: " + request.getHost());
             System.out.println(e);
+            sendResponse(new HttpResponse("404 Not Found"));
         } catch (IOException e) {
             System.out.println("500 Internal Server Error: " + e);
+            sendResponse(new HttpResponse("500 Internal Server Error"));
         }
 
         return server;
@@ -160,6 +161,7 @@ public class ProxyThread implements Runnable {
             server.close();
         } catch (IOException e) {
             System.out.println("500 Internal Server Error: " + e);
+            sendResponse(new HttpResponse("500 Internal Server Error"));
         }
 
         return response;
@@ -174,7 +176,6 @@ public class ProxyThread implements Runnable {
     private void sendResponse(HttpResponse response) {
         try {
             DataOutputStream toClient = new DataOutputStream(mClient.getOutputStream());
-
             /* Write response to mClient. First headers, then body */
             toClient.writeBytes(response.toString());
             toClient.write(response.body);

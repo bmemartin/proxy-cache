@@ -41,6 +41,10 @@ public class HttpResponse {
     /* Body of reply */
     byte[] body = new byte[MAX_OBJECT_SIZE];
 
+    public HttpResponse(String error) {
+        formErrorResponse(error);
+    }
+
     /**
      * Creates a HttpResponse object by reading all information contained
      * within the passed DataInputStream
@@ -94,6 +98,7 @@ public class HttpResponse {
             }
         } catch (IOException e) {
             System.out.println("502 Bad Gateway: " + e);
+            formErrorResponse("502 Bad Gateway");
             return;
         }
 
@@ -130,6 +135,7 @@ public class HttpResponse {
             }
         } catch (IOException e) {
             System.out.println("502 Bad Gateway: " + e);
+            formErrorResponse("502 Bad Gateway");
             return;
         }
 
@@ -172,5 +178,14 @@ public class HttpResponse {
         res += CRLF;
 
         return res;
+    }
+
+    private void formErrorResponse(String error) {
+        String line = "HTTP/1.1 " + error + "\r\n";
+        statusLine = line;
+
+        String[] tmp = line.split(" ");
+        version = tmp[0];
+        status = Integer.parseInt(tmp[1]);
     }
 }

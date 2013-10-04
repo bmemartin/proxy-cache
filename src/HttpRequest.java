@@ -50,7 +50,7 @@ public class HttpRequest {
         try {
             firstLine = from.readLine();
         } catch (IOException e) {
-            System.out.println("400 Bad Request: " + e);
+            System.out.println("Error occurred when reading first request line: " + e);
             return;
         }
 
@@ -86,7 +86,7 @@ public class HttpRequest {
                 line = from.readLine();
             }
         } catch (IOException e) {
-            System.out.println("400 Bad Request: " + e);
+            System.out.println("Error occurred when reading request headers: " + e);
             return;
         }
     }
